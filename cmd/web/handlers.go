@@ -4,13 +4,10 @@ import (
 	"fmt"
 	"net/http"
 	"strconv"
-	"strings"
-	"unicode/utf8"
 
+	"aaravdrive.com/snippetbox/pkg/forms"
 	"aaravdrive.com/snippetbox/pkg/models"
 )
-
-const blankErrMsg = "This field can not be blank"
 
 func (app *application) home(w http.ResponseWriter, r *http.Request) {
 	s, err := app.snippets.Latest()
@@ -46,9 +43,11 @@ func (app *application) showSnippet(w http.ResponseWriter, r *http.Request) {
 }
 
 func (app *application) createSnippetForm(w http.ResponseWriter, r *http.Request) {
-	app.render(w, r, "create.page.tmpl", nil)
+	app.render(w, r, "create.page.tmpl", &templateData{
+		Form: forms.New(nil),
+	})
 
-	w.Write([]byte("create a new snippet"))
+	// w.Write([]byte("create a new snippet"))
 }
 
 func (app *application) createSnippet(w http.ResponseWriter, r *http.Request) {
@@ -57,33 +56,21 @@ func (app *application) createSnippet(w http.ResponseWriter, r *http.Request) {
 		app.clientError(w, http.StatusBadRequest)
 		return
 	}
-	title := r.PostForm.Get("title")
-	content := r.PostForm.Get("content")
-	expires := r.PostForm.Get("expires")
 
-	errors := make(map[string]string)
+	form := forms.New(r.PostForm)
+	form.Required("title", "content", "expires")
+	form.MaxLength("title", 100)
+	form.PermittedValues("expires", "1", "7", "365")
 
-	if strings.TrimSpace(title) == "" {
-		errors["title"] = blankErrMsg
-	} else if utf8.RuneCountInString(title) > 100 {
-		errors["title"] = "This field is too long (maximum is 100 charecters)"
+	if !form.Valid() {
+		app.render(w, r, "create.page.tmpl", &templateData{
+			Form: form,
+		})
+
+		return
 	}
 
-	if strings.TrimSpace(content) == "" {
-		errors["content"] = blankErrMsg
-	}
-
-	if strings.TrimSpace(expires) == "" {
-		errors["expires"] = blankErrMsg
-	} else if expires != "7" && expires != "365" && expires != "1" {
-		errors["expires"] = "This field is invalid"
-	}
-
-	if len(errors) > 0 {
-		fmt.Fprint(w, errors)
-	}
-
-	id, err := app.snippets.Insert(title, content, expires)
+	id, err := app.snippets.Insert(form.Get("title"), form.Get("content"), form.Get("expires"))
 	if err != nil {
 		app.serverError(w, err)
 		return
