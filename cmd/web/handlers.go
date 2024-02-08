@@ -51,7 +51,9 @@ func (app *application) createSnippetForm(w http.ResponseWriter, r *http.Request
 }
 
 func (app *application) createSnippet(w http.ResponseWriter, r *http.Request) {
+
 	err := r.ParseForm()
+
 	if err != nil {
 		app.clientError(w, http.StatusBadRequest)
 		return
@@ -75,6 +77,8 @@ func (app *application) createSnippet(w http.ResponseWriter, r *http.Request) {
 		app.serverError(w, err)
 		return
 	}
+
+	app.session.Put(r, "flash", "Snippet Successfully Created")
 
 	http.Redirect(w, r, fmt.Sprintf("/snippet/%d", id), http.StatusSeeOther)
 
