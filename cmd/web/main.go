@@ -1,6 +1,7 @@
 package main
 
 import (
+	"crypto/tls"
 	"database/sql"
 	"flag"
 	"html/template"
@@ -20,6 +21,7 @@ type application struct {
 	infoLog       *log.Logger
 	snippets      *mysql.SnippetModel
 	templateCache map[string]*template.Template
+	users         *mysql.UserModel
 }
 
 func main() {
@@ -52,6 +54,7 @@ func main() {
 
 	session := sessions.New([]byte(*secret))
 	session.Lifetime = 12 * time.Hour
+	session.Secure = true
 
 	app := &application{
 		session:       session,
@@ -59,17 +62,28 @@ func main() {
 		infoLog:       infoLog,
 		snippets:      &mysql.SnippetModel{DB: db},
 		templateCache: templateCache,
+		users:         &mysql.UserModel{DB: db},
+	}
+
+	tlsConfig := &tls.Config{
+		PreferServerCipherSuites: true,
+		CurvePreferences:         []tls.CurveID{tls.X25519, tls.CurveP256},
 	}
 
 	srv := &http.Server{
-		Addr:     *addr,
-		ErrorLog: errLog,
-		Handler:  app.routes(),
+		Addr: *addr,
+
+		ErrorLog:     errLog,
+		Handler:      app.routes(),
+		TLSConfig:    tlsConfig,
+		IdleTimeout:  time.Minute,
+		ReadTimeout:  5 * time.Second,
+		WriteTimeout: 10 * time.Second,
 	}
 
 	infoLog.Printf("Starting server on %s", *addr)
 
-	err = srv.ListenAndServe()
+	err = srv.ListenAndServeTLS("../../tls/cert.pem", "../../tls/key.pem")
 	errLog.Fatal(err)
 }
 

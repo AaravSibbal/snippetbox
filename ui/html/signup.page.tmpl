@@ -1,0 +1,35 @@
+{{template "base" .}}
+
+{{define "title"}}Signup{{end}}
+
+{{define "body"}}
+    <form action="/user/signup" method="post" novalidate>
+        {{with .Form}}
+            <div>
+                <label>Name: </label>
+                {{with .Errors.Get "name"}}
+                    <label>{{.}}</label>
+                {{end}}
+                <input type="text" name="name" value='{{.Get "name"}}'>
+            </div>
+            <div>
+                <label>Email: </label>
+                {{with .Errors.Get "email"}}
+                    <label>{{.}}</label>
+                {{end}}
+                <input type="text" name="email" value='{{.Get "email"}}'>
+            </div>
+            <div>
+                <label>Password: </label>
+                {{with .Errors.Get "password"}}
+                    <label>{{.}}</label>
+                {{end}}
+                <input type="password" name="password" value='{{.Get "password"}}'>
+            </div>
+            <div>
+                <input type="submit" value="Submit">
+            </div>
+        {{end}}
+    </form>
+
+{{end}}

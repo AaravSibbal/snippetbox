@@ -3,9 +3,12 @@ package forms
 import (
 	"fmt"
 	"net/url"
+	"regexp"
 	"strings"
 	"unicode/utf8"
 )
+
+var EmailRX = regexp.MustCompile(`^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$`)
 
 type Form struct {
 	url.Values
@@ -16,6 +19,30 @@ func New(data url.Values) *Form {
 	return &Form{
 		data,
 		errors(map[string][]string{}),
+	}
+}
+
+func (f *Form) MinLength(field string, minLen int) {
+	value := f.Get(field)
+
+	if value == "" {
+		return
+	}
+
+	if utf8.RuneCountInString(value) < minLen {
+		f.Errors.Add(field, fmt.Sprintf("The field is too short minimum length is %d", minLen))
+	}
+}
+
+func (f *Form) MatchesPattern(field string, pattern *regexp.Regexp) {
+	value := f.Get(field)
+
+	if value == "" {
+		return
+	}
+
+	if !pattern.MatchString(value) {
+		f.Errors.Add(field, "This field is invalid")
 	}
 }
 
@@ -54,8 +81,6 @@ func (f *Form) PermittedValues(field string, opts ...string) {
 }
 
 func (f *Form) Valid() bool {
-	if len(f.Errors) == 0 {
-		return true
-	}
-	return false
+
+	return len(f.Errors) == 0
 }
