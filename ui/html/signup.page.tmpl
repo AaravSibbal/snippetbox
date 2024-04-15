@@ -5,6 +5,7 @@
 {{define "body"}}
     <form action="/user/signup" method="post" novalidate>
         {{with .Form}}
+            <input type="hidden" name="csrf_token" value="{{.CSRFToken}}">
             <div>
                 <label>Name: </label>
                 {{with .Errors.Get "name"}}

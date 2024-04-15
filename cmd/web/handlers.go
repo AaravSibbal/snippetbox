@@ -3,8 +3,9 @@ package main
 import (
 	"fmt"
 	"net/http"
+	"os"
 	"strconv"
-	
+
 	"aaravdrive.com/snippetbox/pkg/forms"
 	"aaravdrive.com/snippetbox/pkg/models"
 )
@@ -94,7 +95,10 @@ func (app *application) signupUser(w http.ResponseWriter, r *http.Request) {
 	err := r.ParseForm()
 
 	if err != nil {
+
 		app.clientError(w, http.StatusBadRequest)
+		app.infoLog(os.Stdout, "something is up")
+
 	}
 
 	form := forms.New(r.PostForm)
@@ -148,7 +152,7 @@ func (app *application) loginUser(w http.ResponseWriter, r *http.Request) {
 		app.serverError(w, err)
 		return
 	}
-
+	fmt.Println("are we getting here?")
 	app.session.Put(r, "userID", id)
 
 	http.Redirect(w, r, "/snippet/create", http.StatusSeeOther)
@@ -160,8 +164,4 @@ func (app *application) logoutUser(w http.ResponseWriter, r *http.Request) {
 	app.session.Put(r, "flash", "You have been successfully logged out")
 
 	http.Redirect(w, r, "/", http.StatusSeeOther)
-}
-
-func (app *application) authenticatedUser(r *http.Request) int {
-	return app.session.GetInt(r, "userID")
 }

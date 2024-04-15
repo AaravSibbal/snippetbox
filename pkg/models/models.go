@@ -20,9 +20,9 @@ type Snippet struct {
 }
 
 type User struct {
-	id             int
-	name           string
-	email          string
-	hashedPassword []byte
-	created        time.Time
+	ID             int
+	Name           string
+	Email          string
+	HashedPassword []byte
+	Created        time.Time
 }
